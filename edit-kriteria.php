@@ -3,119 +3,134 @@ session_start();
 include('configdb.php');
 
 // Ambil ID dari URL
-$id_kriteria = $_GET['id'];
+$id_kriteria = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Query untuk mengambil data kriteria berdasarkan ID
-$result = $mysqli->query("SELECT * FROM kriteria WHERE id_kriteria = $id_kriteria");
-if (!$result) {
-    echo "Error: " . $mysqli->connect_error;
+if ($id_kriteria <= 0) {
+    $_SESSION['error'] = "ID kriteria tidak valid.";
+    header('Location: kriteria.php');
     exit();
 }
 
-// Ambil data kriteria yang ingin diedit
+// Ambil data kriteria berdasarkan ID
+$stmt = $mysqli->prepare("SELECT * FROM kriteria WHERE id_kriteria = ?");
+$stmt->bind_param("i", $id_kriteria);
+$stmt->execute();
+$result = $stmt->get_result();
 $row = $result->fetch_assoc();
-?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Kriteria</title>
-    <link href="ui/css/cerulean.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<!-- Static navbar -->
-    <nav class="navbar navbar-default">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="#"><?php echo $_SESSION['judul'];?></a>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                    <li><a href="index.php">Home</a></li>
-                    <li><a href="kriteria.php">Data Kriteria</a></li>
-                    <li><a href="alternatif.php">Data Alternatif</a></li>
-                    <li><a href="analisa.php">Analisa</a></li>
-                    <li><a href="perhitungan.php">Perhitungan</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+if (!$row) {
+    $_SESSION['error'] = "Data kriteria tidak ditemukan.";
+    header('Location: kriteria.php');
+    exit();
+}
 
-    <div class="container">
-        <div class="panel panel-primary">
-            <div class="panel-heading">Edit Kriteria</div>
-            <div class="panel-body">
-                <form method="POST" action="edit-kriteria.php?id=<?php echo $id_kriteria; ?>" class="form-horizontal">
-                    <div class="form-group">
-                        <label for="kriteria" class="col-sm-2 control-label">Kriteria</label>
-                        <div class="col-sm-10">
-                            <input type="text" name="kriteria" class="form-control" value="<?php echo $row['kriteria']; ?>" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="kepentingan" class="col-sm-2 control-label">Kepentingan</label>
-                        <div class="col-sm-10">
-                            <select name="kepentingan" class="form-control" required>
-                                <option value="1" <?php if ($row['kepentingan'] == 1) echo 'selected'; ?>>1 - Tidak Penting</option>
-                                <option value="2" <?php if ($row['kepentingan'] == 2) echo 'selected'; ?>>2 - Kurang Penting</option>
-                                <option value="3" <?php if ($row['kepentingan'] == 3) echo 'selected'; ?>>3 - Cukup Penting</option>
-                                <option value="4" <?php if ($row['kepentingan'] == 4) echo 'selected'; ?>>4 - Penting</option>
-                                <option value="5" <?php if ($row['kepentingan'] == 5) echo 'selected'; ?>>5 - Sangat Penting</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cost_benefit" class="col-sm-2 control-label">Cost / Benefit</label>
-                        <div class="col-sm-10">
-                            <select name="cost_benefit" class="form-control" required>
-                                <option value="cost" <?php if ($row['cost_benefit'] == 'cost') echo 'selected'; ?>>Cost</option>
-                                <option value="benefit" <?php if ($row['cost_benefit'] == 'benefit') echo 'selected'; ?>>Benefit</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="col-sm-offset-2 col-sm-10">
-                            <button type="submit" class="btn btn-primary">Update Kriteria</button>
-                            <a href="kriteria.php" class="btn btn-warning">Batal</a>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript -->
-    <script src="ui/js/jquery-1.10.2.min.js"></script>
-    <script src="ui/js/bootstrap.min.js"></script>
-</body>
-</html>
-
-<?php
 // Proses pembaruan data kriteria
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Ambil data dari form
-    $kriteria = $mysqli->real_escape_string($_POST['kriteria']);
-    $kepentingan = $mysqli->real_escape_string($_POST['kepentingan']);
-    $cost_benefit = $mysqli->real_escape_string($_POST['cost_benefit']);
+    $kriteria = $_POST['kriteria'];
+    $kepentingan = $_POST['kepentingan'];
+    $cost_benefit = $_POST['cost_benefit'];
 
-    // Query untuk memperbarui data kriteria
-    $update_query = "UPDATE kriteria SET kriteria = '$kriteria', kepentingan = '$kepentingan', cost_benefit = '$cost_benefit' WHERE id_kriteria = $id_kriteria";
+    $update = $mysqli->prepare("UPDATE kriteria SET kriteria=?, kepentingan=?, cost_benefit=? WHERE id_kriteria=?");
+    $update->bind_param("ssis", $kriteria, $kepentingan, $cost_benefit, $id_kriteria);
 
-    if ($mysqli->query($update_query)) {
+    if ($update->execute()) {
         $_SESSION['success'] = "Data kriteria berhasil diperbarui.";
-        header('Location: kriteria.php');  // Arahkan ke halaman data kriteria setelah update
+        header('Location: kriteria.php');
         exit();
     } else {
-        $_SESSION['error'] = "Gagal memperbarui data kriteria: " . $mysqli->error;
+        $_SESSION['error'] = "Gagal memperbarui data kriteria: " . $update->error;
         header("Location: edit-kriteria.php?id=$id_kriteria");
         exit();
     }
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Kriteria - <?= $_SESSION['judul']; ?></title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white font-sans antialiased">
+
+<!-- NAVBAR -->
+<?php include 'navbar.php'; ?>
+
+<!-- Konten Utama -->
+<section class="pt-28 pb-16 px-6">
+    <div class="max-w-3xl mx-auto bg-gray-900/80 rounded-2xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-red-500 mb-6">Edit Kriteria</h1>
+
+        <!-- Alert -->
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="mb-4 p-3 bg-red-600 text-white rounded">
+                <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="mb-4 p-3 bg-green-600 text-white rounded">
+                <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="edit-kriteria.php?id=<?= $id_kriteria; ?>" class="space-y-6"
+              onsubmit="return confirm('Apakah Anda yakin ingin memperbarui kriteria ini?')">
+            
+            <!-- Nama Kriteria -->
+            <div>
+                <label for="kriteria" class="block mb-2 font-semibold">Kriteria</label>
+                <input type="text" name="kriteria" id="kriteria"
+                       value="<?= htmlspecialchars($row['kriteria']); ?>"
+                       class="w-full px-4 py-2 rounded-lg text-black" required>
+            </div>
+
+            <!-- Kepentingan -->
+            <div>
+                <label for="kepentingan" class="block mb-2 font-semibold">Kepentingan</label>
+                <select name="kepentingan" id="kepentingan" class="w-full px-4 py-2 rounded-lg text-black" required>
+                    <?php for ($x = 1; $x <= 5; $x++): ?>
+                        <option value="<?= $x; ?>" <?= $row['kepentingan'] == $x ? 'selected' : ''; ?>>
+                            <?= $x; ?> - 
+                            <?php
+                            switch ($x) {
+                                case 1: echo "Tidak Penting"; break;
+                                case 2: echo "Kurang Penting"; break;
+                                case 3: echo "Cukup Penting"; break;
+                                case 4: echo "Penting"; break;
+                                case 5: echo "Sangat Penting"; break;
+                            }
+                            ?>
+                        </option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+
+            <!-- Cost / Benefit -->
+            <div>
+                <label for="cost_benefit" class="block mb-2 font-semibold">Cost / Benefit</label>
+                <select name="cost_benefit" id="cost_benefit" class="w-full px-4 py-2 rounded-lg text-black" required>
+                    <option value="cost" <?= $row['cost_benefit'] == 'cost' ? 'selected' : ''; ?>>Cost</option>
+                    <option value="benefit" <?= $row['cost_benefit'] == 'benefit' ? 'selected' : ''; ?>>Benefit</option>
+                </select>
+            </div>
+
+            <!-- Tombol -->
+            <div class="flex items-center gap-4">
+                <button type="submit" class="bg-red-500 px-6 py-3 rounded-lg font-bold hover:bg-red-600 transition">
+                    Update Kriteria
+                </button>
+                <a href="kriteria.php" class="bg-gray-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-700 transition">
+                    Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+
+</body>
+</html>

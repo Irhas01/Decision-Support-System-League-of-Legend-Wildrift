@@ -117,23 +117,21 @@ $rankData = array_slice($sortedV, ($pageR-1)*$limit, $limit, true);
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-black text-white">
+<body class="bg-black text-white font-sans antialiased">
 
-<nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-    <span class="font-bold"><span class="text-red-500">SPK</span> WILD RIFT</span>
-    <div class="hidden md:flex gap-8 text-sm font-semibold">
-      <a href="index.php">HOME</a>
-      <a href="kriteria.php">KRITERIA</a>
-      <a href="alternatif.php">ALTERNATIF</a>
-      <a href="analisa.php">ANALISA</a>
-      <a href="perhitungan.php" class="text-red-500">PERHITUNGAN</a>
-    </div>
+<!-- NAVBAR -->
+<?php include 'navbar.php'; ?>
+
+<div class="pt-28 px-6 max-w-7xl mx-auto">
+
+  <!-- HEADER -->
+  <div class="mb-10">
+    <h1 class="text-4xl md:text-5xl font-black text-red-500 mb-4">PERHITUNGAN</h1>
+    <p class="text-white/80 max-w-2xl">
+        Halaman ini menampilkan hasil secara mendetail perhitungan penilaian dengan menggunakan metode
+      <b>Weighted Product</b>.
+    </p>
   </div>
-</nav>
-
-<div class="pt-32 px-6 max-w-7xl mx-auto">
-<h1 class="text-4xl font-black text-red-500 mb-10">PERHITUNGAN WEIGHTED PRODUCT</h1>
 
 <!-- ================= MATRIX ================= -->
 <div class="bg-white/10 border border-white/20 rounded-xl p-6 mb-12">
@@ -202,7 +200,7 @@ $rankData = array_slice($sortedV, ($pageR-1)*$limit, $limit, true);
 </thead>
 <tbody>
 <?php $rank = ($pageR-1)*$limit+1; foreach($rankData as $i=>$val): ?>
-<tr class="border-b border-white/10 <?= $rank==1?'bg-green-500/20':'' ?>">
+<tr class="border-b border-white/10 <?= in_array($rank, [1,2,3]) ? 'bg-green-500/20' : '' ?>">
 <td class="p-3 text-center font-bold"><?= $rank++ ?></td>
 <td class="p-3"><?= $alt_name[$i] ?></td>
 <td class="p-3 text-center"><?= $val ?></td>

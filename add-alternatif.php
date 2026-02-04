@@ -1,159 +1,103 @@
 <?php
-	session_start();
-	include('configdb.php');
+session_start();
+include('configdb.php');
+
+/* ====== AMBIL KRITERIA ====== */
+$kriteria = [];
+$qk = $mysqli->query("SELECT * FROM kriteria");
+while($row = $qk->fetch_assoc()){
+    $kriteria[] = $row['kriteria'];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $alternatif = $_POST['alternatif'];
+
+    // Siapkan data nilai kriteria dari form
+    $nilai = [];
+    foreach($kriteria as $k) {
+        $nilai[$k] = $_POST[$k];
+    }
+
+    // Siapkan query INSERT dinamis
+    $cols = "alternatif, " . implode(", ", array_keys($nilai));
+    $placeholders = implode(", ", array_fill(0, count($nilai)+1, "?")); // +1 untuk alternatif
+    $query = "INSERT INTO alternatif ($cols) VALUES ($placeholders)";
+
+    $stmt = $mysqli->prepare($query);
+    if ($stmt === false) die('Error preparing statement: ' . $mysqli->error);
+
+    // Bind semua parameter (semua string)
+    $types = str_repeat("s", count($nilai)+1);
+    $params = array_merge([$alternatif], array_values($nilai));
+    $stmt->bind_param($types, ...$params);
+
+    if ($stmt->execute()) {
+        header('Location: alternatif.php');
+        exit;
+    } else {
+        $error = "Gagal menambahkan alternatif: " . $stmt->error;
+    }
+
+    $stmt->close();
+}
 ?>
 <!DOCTYPE html>
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="favicon.ico">
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title><?= $_SESSION['judul'].' - '.$_SESSION['by']; ?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white font-sans antialiased">
 
-    <title><?php echo $_SESSION['judul']." - ".$_SESSION['by'];?></title>
+<?php include 'navbar.php'; ?>
 
-    <!-- Bootstrap core CSS -->
-    <!--link href="ui/css/bootstrap.css" rel="stylesheet"-->
-	<link href="ui/css/cerulean.min.css" rel="stylesheet">
+<div class="pt-28 px-6 max-w-3xl mx-auto">
 
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <!--script src="./index_files/ie-emulation-modes-warning.js"></script-->
+<div class="mb-10">
+  <h1 class="text-4xl md:text-5xl font-black text-red-500 mb-4">Tambah Alternatif</h1>
+  <p class="text-white/80 max-w-2xl">
+    Masukkan data alternatif beserta nilai tiap kriteria
+  </p>
+</div>
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
+<?php if(isset($error)): ?>
+<p class="mb-4 text-red-500 font-bold"><?= $error ?></p>
+<?php endif; ?>
 
-  <body>
+<form action="" method="post" class="bg-white/10 border border-white/20 rounded-xl p-6 space-y-4">
+  <div>
+    <label class="block mb-1 font-semibold">Nama Alternatif</label>
+    <input type="text" name="alternatif" required 
+           class="w-full px-4 py-2 rounded bg-white/10 border border-white/20 focus:outline-none focus:border-red-500">
+  </div>
 
-      <!-- Static navbar -->
-      <nav class="navbar navbar-default">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#"><?php echo $_SESSION['judul'];?></a>
-          </div>
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-              <li><a href="index.php">Home</a></li>
-              <li><a href="kriteria.php">Data Kriteria</a></li>
-              <li><a href="alternatif.php">Data Alternatif</a></li>
-			  <li><a href="analisa.php">Analisa</a></li>
-              <li><a href="perhitungan.php">Perhitungan</a></li>
-			</ul>
-          </div><!--/.nav-collapse -->
-        </div><!--/.container-fluid -->
-      </nav>
-		<div class="container">
-      <!-- Main component for a primary marketing message or call to action -->
-      <div class="panel panel-primary">
-		  <!-- Default panel contents -->
-		  <div class="panel-heading">Tambah Data Alternatif</div>
-		  <div class="panel-body">
-							<?php
-											$kriteria = $mysqli->query("select * from kriteria");
-											if(!$kriteria){
-												echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-												exit();
-											}
-											$i=0;
-											while ($row = $kriteria->fetch_assoc()) {
-												@$k[$i] = $row["kriteria"];
-												$i++;
-											}
-							?>
-							<form role="form" method="post" action="add.php">
-                                    <div class="box-body">
-                                        <div class="form-group">
-                                            <label for="alternatif">Alternatif</label>
-                                            <input type="text" class="form-control" name="alternatif" id="alternatif" placeholder="Nama Karakter"> 
-                                        </div>
-																				<div class="form-group">
-                                            <label for="alternatif">C1 Strength</label>
-                                            <input type="text" class="form-control" name="k1" id="alternatif" placeholder="Nilai Ketahanan Serangan Sihir Karakter" maxlength="3">
-                                        </div>
-										<div class="form-group">
-                                            <label for="k2"><?php echo ucwords($k[1]);?></label>
-                                            <input type="text" select class="form-control" name="k2" id="k2" placeholder="Nilai Ketahanan Serangan Fisik Karakter" maxlength="3">
+  <?php foreach($kriteria as $k): ?>
+  <div>
+    <label class="block mb-1 font-semibold"><?= ucwords($k) ?></label>
+    <input type="text" name="<?= $k ?>" required 
+           class="w-full px-4 py-2 rounded bg-white/10 border border-white/20 focus:outline-none focus:border-red-500">
+  </div>
+  <?php endforeach; ?>
 
-                                        </div>
-										<div class="form-group">
-                                            <label for="k3"><?php echo ucwords($k[2]);?></label>
-                                            <input type="text" select class="form-control" name="k3" id="k3" placeholder="Nilai Kecepatan Perpindahan Karakter" maxlength="3">
-												
-                                        </div>
-										<div class="form-group">
-                                            <label for="k4"><?php echo ucwords($k[3]);?></label>
-                                            <input type="text" select class="form-control" name="k4" id="k4" placeholder="Nilai Besaran Darah Karakter" maxlength="4">
-							
-                                        </div>
-										<div class="form-group">
-                                            <label for="k5"><?php echo ucwords($k[4]);?></label>
-                                            <input type="text" select class="form-control" name="k5" id="k5" placeholder="Nilai Kecepatan Regenerasi Darah Karakter" maxlength="3">
-                                        
-                                         </div>
-                    <div class="form-froup">
-                                            <label for="k6"><?php echo ucwords($k[5]);?></label>
-                                            <input type="text" select class="form-control" name="k6" id="k6" placeholder="Nilai Besaran Mana/Energi Karakter" maxlength="3">
-                                        
-                                          </div>
-                    <div class="form-group">
-                                            <label for="k7"><?php echo ucwords($k[6]);?></label>
-                                            <input type="text" select class="form-control" name="k7" id="k7" placeholder="Nilai Kecepatan Regenerasi Mana/Energi Karakter" maxlength="3">
+  <div class="flex gap-4 mt-4">
+    <button type="submit" 
+            class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-full font-bold transition">
+      Tambah
+    </button>
+    <a href="alternatif.php" 
+       class="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-full font-bold transition">
+      Batal
+    </a>
+  </div>
+</form>
 
-                                          </div>
-                    <div class="form-group">
-                                            <label for="k8"><?php echo ucwords($k[7]);?></label>
-                                            <input type="text" select class="form-control" name="k8" id="k8" placeholder="Nilai Kekuatan Serangan Sihir Karakter" maxlength="3">
-                                         
-                                          </div>
-                    <div class="form-group">
-                                            <label for="k9"><?php echo ucwords($k[8]);?></label>
-                                            <input type="text" select class="form-control" name="k9" id="k9" placeholder="Nilai Kekuatan Serangan Fisik Karakter" maxlength="3">
-                                         
-                                          </div>
-                    <div class="form-group">
-                                            <label for="k10"><?php echo ucwords($k[9]);?></label>
-                                            <input type="text" select class="form-control" name="k10" id="k10" placeholder="Nilai Kekuatan Seangan Kritis Karakter" maxlength="3">
-                                          
-                                          </div>
-                    <div class="form-group">
-                                            <label for="k11"><?php echo ucwords($k[10]);?></label>
-                                            <input type="text" select class="form-control" name="k11" id="k11" placeholder="Nilai Kecepatan Serangan Karakter" maxlength="3">
-                                         
-                                          </div>
+</div>
 
-                                    <div class="box-footer">
-										                <button type="reset" class="btn btn-info">Reset</button>
-										                <a href="alternatif.php" type="cancel" class="btn btn-warning">Batal</a>
-                                        <button type="submit" class="btn btn-primary">Tambahkan</button>
-                                    </div>
-                            </form>
-							<?php ?>
-		  </div>
-		  <div class="panel-footer text-primary"><?php echo $_SESSION['by'];?><div class="pull-right"></div></div>
-		</div>
+<p class="text-center text-white/50 text-sm mt-12">
+© <?= $_SESSION['by']; ?>
+</p>
 
-    </div> <!-- /container -->
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="ui/js/jquery-1.10.2.min.js"></script>
-	<script src="ui/js/bootstrap.min.js"></script>
-	<script src="ui/js/bootswatch.js"></script>
-	<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="ui/js/ie10-viewport-bug-workaround.js"></script>
-
-</body></html>
+</body>
+</html>

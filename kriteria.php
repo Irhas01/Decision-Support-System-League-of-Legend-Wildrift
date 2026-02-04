@@ -25,26 +25,13 @@ if (!isset($_SESSION['by'])) $_SESSION['by'] = "Irhas Maulana S";
 <body class="bg-black text-white font-sans antialiased">
 
 <!-- NAVBAR -->
-<nav class="fixed top-0 left-0 w-full z-50 bg-black/90 backdrop-blur border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-    <a href="index.php" class="font-bold tracking-wider hover:text-red-500">
-      <span class="text-red-500">SPK</span> WILD RIFT
-    </a>
-    <div class="hidden md:flex gap-8 text-sm font-semibold">
-      <a href="kriteria.php" class="text-red-500">DATA KRITERIA</a>
-      <a href="alternatif.php" class="hover:text-red-500">DATA ALTERNATIF</a>
-      <a href="analisa.php" class="hover:text-red-500">ANALISA</a>
-      <a href="perhitungan.php" class="hover:text-red-500">PERHITUNGAN</a>
-    </div>
-  </div>
-</nav>
+<?php include 'navbar.php'; ?>
 
-<!-- CONTENT -->
-<div class="pt-32 px-6 max-w-7xl mx-auto">
+<div class="pt-28 px-6 max-w-7xl mx-auto">
 
   <!-- HEADER -->
   <div class="mb-10">
-    <h1 class="text-3xl md:text-5xl font-black text-red-500 mb-4">DATA KRITERIA</h1>
+    <h1 class="text-4xl md:text-5xl font-black text-red-500 mb-4">DATA KRITERIA</h1>
     <p class="text-white/80 max-w-2xl">
       Halaman ini digunakan untuk mengelola kriteria penilaian menggunakan metode
       <b>Weighted Product</b>.
@@ -154,13 +141,16 @@ $(document).ready(function(){
   });
 
   function checkLastPage(){
-    var info = table.page.info();
-    if(info.page === info.pages - 1){
-      $('#btn-analisa-wrapper').removeClass('hidden');
-    } else {
-      $('#btn-analisa-wrapper').addClass('hidden');
-    }
+  var info = table.page.info();
+  if(info.page === info.pages - 1){
+    $('#btn-analisa-wrapper').removeClass('hidden');
+
+    // scroll otomatis ke tombol
+    document.getElementById('btn-analisa-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    $('#btn-analisa-wrapper').addClass('hidden');
   }
+}
 
   table.on('draw', checkLastPage);
   checkLastPage();

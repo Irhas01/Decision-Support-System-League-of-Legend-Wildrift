@@ -59,29 +59,18 @@ arsort($sortedV);
 <body class="bg-black text-white">
 
 <!-- NAVBAR -->
-<nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-    <a href="index.php" class="font-bold tracking-wider">
-      <span class="text-red-500">SPK</span> WILD RIFT
-    </a>
-    <div class="hidden md:flex gap-8 text-sm font-semibold">
-      <a href="kriteria.php">DATA KRITERIA</a>
-      <a href="alternatif.php">DATA ALTERNATIF</a>
-      <a href="analisa.php" class="text-red-500">ANALISA</a>
-      <a href="perhitungan.php">PERHITUNGAN</a>
-    </div>
+<?php include 'navbar.php'; ?>
+
+<div class="pt-28 px-6 max-w-7xl mx-auto">
+
+  <!-- HEADER -->
+  <div class="mb-10">
+    <h1 class="text-4xl md:text-5xl font-black text-red-500 mb-4">ANALISA</h1>
+    <p class="text-white/80 max-w-2xl">
+      Halaman ini menampilkan hasil analisa penilaian alternatif menggunakan metode
+      <b>Weighted Product</b>.
+    </p>
   </div>
-</nav>
-
-<div class="pt-32 px-6 max-w-7xl mx-auto">
-
-<!-- HEADER -->
-<div class="mb-10">
-  <h1 class="text-4xl font-black text-red-500 mb-4">HASIL ANALISA</h1>
-  <p class="text-white/80">
-    Hasil perhitungan metode <b>Weighted Product</b>.
-  </p>
-</div>
 
 <!-- ================= CHART ================= -->
 <div class="bg-white/10 border border-white/20 rounded-xl p-6 mb-12">
@@ -171,7 +160,7 @@ $paginatedRank = array_slice($sortedV, $offsetR, $limitR, true);
 $rank = $offsetR + 1;
 foreach ($paginatedRank as $i => $val):
 ?>
-<tr class="border-b border-white/10">
+<tr class="border-b border-white/10 <?= in_array($rank, [1,2,3]) ? 'bg-green-500/20' : '' ?>">
 <td class="p-3 text-center font-bold"><?= $rank++ ?></td>
 <td class="p-3"><?= $alt_name[$i] ?></td>
 <td class="p-3 text-center"><?= $val ?></td>

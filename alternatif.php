@@ -25,6 +25,11 @@ $totalPage = ceil($totalData/$limit);
 $alternatif = $mysqli->query(
   "SELECT * FROM alternatif LIMIT $offset,$limit"
 );
+
+/* ====== TRUNCATE FUNCTION ====== */
+function truncate($text, $max=7){
+    return strlen($text) > $max ? substr($text,0,$max).'...' : $text;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -35,30 +40,18 @@ $alternatif = $mysqli->query(
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-black text-white">
+<body class="bg-black text-white font-sans antialiased">
 
 <!-- NAVBAR -->
-<nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-    <a href="index.php" class="font-bold tracking-wider">
-      <span class="text-red-500">SPK</span> WILD RIFT
-    </a>
-    <div class="hidden md:flex gap-8 text-sm font-semibold">
-      <a href="kriteria.php">KRITERIA</a>
-      <a href="alternatif.php" class="text-red-500">ALTERNATIF</a>
-      <a href="analisa.php">ANALISA</a>
-      <a href="perhitungan.php">PERHITUNGAN</a>
-    </div>
-  </div>
-</nav>
+<?php include 'navbar.php'; ?>
 
-<div class="pt-32 px-6 max-w-7xl mx-auto">
+<div class="pt-28 px-6 max-w-7xl mx-auto">
 
 <!-- HEADER -->
 <div class="mb-10">
-  <h1 class="text-4xl font-black text-red-500 mb-4">DATA ALTERNATIF</h1>
+  <h1 class="text-4xl md:text-5xl font-black text-red-500 mb-4">DATA ALTERNATIF</h1>
   <p class="text-white/80 max-w-2xl">
-    Data alternatif yang akan dinilai berdasarkan kriteria.
+    Data alternatif yang akan dinilai berdasarkan kriteria <b>Stat Karakter</b>
   </p>
 </div>
 
@@ -77,11 +70,11 @@ $alternatif = $mysqli->query(
 <thead class="bg-red-500/20">
 <tr>
   <th class="p-3 w-12">No</th>
-  <th class="p-3 text-left min-w-[180px]">Alternatif</th>
+  <th class="p-3 text-left min-w-[100px] max-w-[150px]">Alternatif</th>
   <?php foreach($kriteria as $k): ?>
-    <th class="p-3 min-w-[90px]"><?= ucwords($k) ?></th>
+    <th class="p-3 min-w-[90px] max-w-[120px] text-center truncate"><?= truncate(ucwords($k)) ?></th>
   <?php endforeach; ?>
-  <th class="p-3 min-w-[150px]">Aksi</th>
+  <th class="p-3 min-w-[150px] text-center">Aksi</th>
 </tr>
 </thead>
 
@@ -92,22 +85,19 @@ while($row = $alternatif->fetch_assoc()):
 ?>
 <tr class="border-b border-white/10 hover:bg-white/5">
 <td class="p-3 text-center"><?= $no++ ?></td>
-<td class="p-3 font-semibold"><?= ucwords($row['alternatif']) ?></td>
+<td class="p-3 font-semibold max-w-[150px] truncate"><?= truncate(ucwords($row['alternatif'])) ?></td>
 
 <?php for($i=1;$i<=count($kriteria);$i++): ?>
-<td class="p-3 text-center"><?= $row["k$i"] ?></td>
+<td class="p-3 text-center max-w-[120px] truncate"><?= truncate($row["k$i"]) ?></td>
 <?php endfor; ?>
 
-<td class="p-3 flex gap-2">
-  <a href="edit-alternatif.php?id=<?= $row['id_alternatif'] ?>"
-     class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-xs font-bold">
-     Edit
-  </a>
-  <a href="del.php?id=<?= $row['id_alternatif'] ?>"
-     onclick="return confirm('Hapus alternatif <?= $row['alternatif'] ?> ?')"
-     class="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-xs font-bold">
-     Hapus
-  </a>
+<td class="p-3 text-center">
+  <a href="edit-alternatif.php?id=<?= $row['id_alternatif'] ?>" 
+     class="text-red-500 font-semibold hover:underline">Edit</a>
+  |
+  <a href="del.php?id=<?= $row['id_alternatif'] ?>" 
+     onclick="return confirm('Hapus alternatif <?= $row['alternatif'] ?> ?')" 
+     class="text-red-500 font-semibold hover:underline">Hapus</a>
 </td>
 </tr>
 <?php endwhile; ?>
@@ -125,8 +115,7 @@ while($row = $alternatif->fetch_assoc()):
 
 <?php for($p=1;$p<=$totalPage;$p++): ?>
 <a href="?page=<?= $p ?>"
-   class="px-4 py-2 border rounded-full
-          <?= $p==$page?'bg-red-500':'' ?>">
+   class="px-4 py-2 border rounded-full <?= $p==$page?'bg-red-500':'' ?>">
 <?= $p ?>
 </a>
 <?php endfor; ?>
@@ -143,7 +132,6 @@ Next ›
 <p class="text-center text-white/50 text-sm">
 © <?= $_SESSION['by']; ?>
 </p>
-</div>
 
 </body>
 </html>

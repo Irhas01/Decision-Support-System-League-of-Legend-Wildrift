@@ -11,8 +11,8 @@
 <body class="bg-black text-white font-sans antialiased">
 
 <!-- NAVBAR -->
-<nav class="fixed top-0 left-0 w-full z-50 bg-black/90 backdrop-blur border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<?php include 'navbar.php'; ?>
+
     <!-- Logo -->
     <a href="index.php" class="flex items-center gap-3 font-bold tracking-wider text-white hover:text-red-500">
       <span class="text-red-500">SPK</span> WILD RIFT
