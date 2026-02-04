@@ -26,7 +26,7 @@ if ($stmt === false) {
 }
 
 // Mengikat parameter ke dalam prepared statement
-$stmt->bind_param("ssssss", $alternatif, $k1, $k2, $k3, $k4, $k5, $k6, $k7, $k8, $k9, $k10, $k11);
+$stmt->bind_param("ssssssssssss", $alternatif, $k1, $k2, $k3, $k4, $k5, $k6, $k7, $k8, $k9, $k10, $k11);
 
 // Menjalankan statement
 if ($stmt->execute()) {

@@ -1,207 +1,149 @@
 <?php
-	session_start();
-	include('configdb.php');
+session_start();
+include('configdb.php');
+
+if (!isset($_SESSION['judul'])) $_SESSION['judul'] = "SPK League of Legends";
+if (!isset($_SESSION['by'])) $_SESSION['by'] = "Irhas Maulana S";
+
+/* ====== PAGINATION ====== */
+$limit = 10;
+$page  = isset($_GET['page']) ? max(1,(int)$_GET['page']) : 1;
+$offset = ($page-1)*$limit;
+
+/* ====== KRITERIA ====== */
+$kriteria = [];
+$qk = $mysqli->query("SELECT * FROM kriteria");
+while($row = $qk->fetch_assoc()){
+  $kriteria[] = $row['kriteria'];
+}
+
+/* ====== ALTERNATIF ====== */
+$totalData = $mysqli->query("SELECT COUNT(*) AS total FROM alternatif")
+             ->fetch_assoc()['total'];
+$totalPage = ceil($totalData/$limit);
+
+$alternatif = $mysqli->query(
+  "SELECT * FROM alternatif LIMIT $offset,$limit"
+);
 ?>
 <!DOCTYPE html>
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="favicon.ico">
-	
-    <title><?php echo $_SESSION['judul']." - ".$_SESSION['by'];?></title>
-
-    <!-- Bootstrap core CSS -->
-    <!--link href="ui/css/bootstrap.css" rel="stylesheet"-->
-	<link href="ui/css/cerulean.min.css" rel="stylesheet">
-
-	<!-- Datatables -->
-	<link rel="stylesheet" type="text/css" href="ui/css/datatables/dataTables.bootstrap.css">
-
-	<script type="text/javascript" language="javascript" src="ui/js/jquery-1.11.3.min.js"></script>
-	<script type="text/javascript" language="javascript" src="ui/js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" language="javascript" src="ui/js/dataTables.bootstrap.min.js"></script>
-
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <!--script src="./index_files/ie-emulation-modes-warning.js"></script-->
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
+<html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?php echo $_SESSION['judul']." - ".$_SESSION['by'];?></title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="ui/css/cerulean.min.css" rel="stylesheet">
-
-    <!-- DataTables -->
-    <link rel="stylesheet" type="text/css" href="ui/css/datatables/dataTables.bootstrap.css">
-
-    <!-- jQuery dan DataTables -->
-    <script src="ui/js/jquery-1.11.3.min.js"></script>  
-    <script src="ui/js/jquery.dataTables.min.js"></script>
-    <script src="ui/js/dataTables.bootstrap.min.js"></script>
-
-    <style>
-      /* Membuat container tabel jadi scroll horizontal jika kolom terlalu banyak */
-      .table-responsive {
-        overflow-x: auto;
-      }
-
-      /* Membuat tabel lebar 100% dan kolom dengan lebar tetap */
-      table {
-        table-layout: fixed;
-        width: 100%;
-        word-wrap: break-word;
-      }
-
-      /* Kolom-kolom tidak membungkus teks dan padding */
-      th, td {
-        white-space: nowrap;
-        padding: 8px;
-        text-align: center;
-      }
-
-      /* Kolom No. beri lebar tetap */
-      th:first-child, td:first-child {
-        width: 50px;
-      }
-
-      /* Kolom Alternatif (nama) lebih lebar dan rata kiri supaya mudah dibaca */
-      th:nth-child(2), td:nth-child(2) {
-        min-width: 150px;
-        text-align: left;
-      }
-
-      /* Kolom kriteria lainnya batasi lebar, sembunyikan overflow */
-      th:nth-child(n+3), td:nth-child(n+3) {
-        max-width: 80px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    </style>
+<meta charset="UTF-8">
+<title><?= $_SESSION['judul'].' - '.$_SESSION['by']; ?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-  <body>
+<body class="bg-black text-white">
 
-      <!-- Static navbar -->
-      <nav class="navbar navbar-default">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#"><?php echo $_SESSION['judul'];?></a>
-          </div>
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-              <li><a href="index.php">Home</a></li>
-              <li><a href="kriteria.php">Data Kriteria</a></li>
-              <li class="active"><a href="#">Data Alternatif</a></li>
-			  <li><a href="analisa.php">Analisa</a></li>
-              <li><a href="perhitungan.php">Perhitungan</a></li>
-			</ul>
-          </div><!--/.nav-collapse -->
-        </div><!--/.container-fluid -->
-      </nav>
-		<div class="container">
-      <!-- Main component for a primary marketing message or call to action -->
-      <div class="panel panel-primary">
-		  <!-- Default panel contents -->
-		  <div class="panel-heading">Data Alternatif</div>
-						<?php
-							//include 'config.php';
-											$kriteria = $mysqli->query("select * from kriteria");
-											if(!$kriteria){
-												echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-												exit();
-											}
-											$i=0;
-											while ($row = $kriteria->fetch_assoc()) {
-												@$k[$i] = $row["kriteria"];
-												$i++;
-											}
-
-							$alternatif = $mysqli->query("select * from alternatif");
-							if(!$alternatif){
-								echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-								exit();
-							}
-							$i=0;
-						?>
-		  <div class="panel-body">
-  <a class='btn btn-primary' href='add-alternatif.php'> Tambah Data Alternatif</a><br /><br />
-  <div class="table-responsive" style="overflow-x: auto;">
-    <table id="example" class="table table-striped table-bordered table-hover" cellspacing="0" width="100%">
-      <thead>
-        <tr>
-            <th>No.</th>
-            <th>Alternatif</th>
-            <?php
-            foreach ($k as $kriteria) {
-                echo "<th>" . ucwords($kriteria) . "</th>";
-            }
-            ?>
-            <th>Pilihan</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $i = 1;
-        while ($row = $alternatif->fetch_assoc()) {
-            echo '<tr>';
-            echo '<td>'.$i.'</td>';
-            echo '<td>'.ucwords($row["alternatif"]).'</td>';
-
-            // Tampilkan kriteria secara dinamis (menghindari hardcode k1, k2, ..., k11)
-            for ($j = 1; $j <= count($k); $j++) {
-                echo '<td>' . $row["k$j"] . '</td>';
-            }
-
-            echo '<td>';
-            echo '<a href="edit-alternatif.php?id='.$row['id_alternatif'].'" class="btn btn-primary btn-sm"><i class="fa fa-pencil"></i> Edit</a> ';
-            echo '<a href="del.php?id='.$row['id_alternatif'].'" onClick="return confirm(\'Menghapus data ke-'.$i.' Alternatif '.$row['alternatif'].' ?\');" class="btn btn-danger btn-sm"><i class="fa fa-times"></i> Delete</a>';
-            echo '</td>';
-
-            echo '</tr>';
-            $i++;
-        }
-        ?>
-      </tbody>
-    </table>
+<!-- NAVBAR -->
+<nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <a href="index.php" class="font-bold tracking-wider">
+      <span class="text-red-500">SPK</span> WILD RIFT
+    </a>
+    <div class="hidden md:flex gap-8 text-sm font-semibold">
+      <a href="kriteria.php">KRITERIA</a>
+      <a href="alternatif.php" class="text-red-500">ALTERNATIF</a>
+      <a href="analisa.php">ANALISA</a>
+      <a href="perhitungan.php">PERHITUNGAN</a>
+    </div>
   </div>
+</nav>
+
+<div class="pt-32 px-6 max-w-7xl mx-auto">
+
+<!-- HEADER -->
+<div class="mb-10">
+  <h1 class="text-4xl font-black text-red-500 mb-4">DATA ALTERNATIF</h1>
+  <p class="text-white/80 max-w-2xl">
+    Data alternatif yang akan dinilai berdasarkan kriteria.
+  </p>
 </div>
- <!-- /container -->
 
+<!-- ACTION -->
+<div class="mb-6">
+  <a href="add-alternatif.php"
+     class="inline-block bg-red-500 hover:bg-red-600 transition
+            font-bold px-6 py-3 rounded-full">
+    + Tambah Alternatif
+  </a>
+</div>
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-	<script src="ui/js/bootstrap.min.js"></script>
-	<script src="ui/js/bootswatch.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="ui/js/ie10-viewport-bug-workaround.js"></script>
-	<!-- Page-Level Demo Scripts - Tables - Use for reference -->
-    <script>
-    $(document).ready(function() {
-		 $('#example').dataTable( {
-            "language": {
-                "url": "ui/css/datatables/Indonesian.json"
-            }
-        } );
-	} );
-    </script>
-</body></html>
+<!-- TABLE -->
+<div class="bg-white/10 border border-white/20 rounded-xl p-6 mb-12 overflow-x-auto">
+<table class="w-full text-sm border-collapse">
+<thead class="bg-red-500/20">
+<tr>
+  <th class="p-3 w-12">No</th>
+  <th class="p-3 text-left min-w-[180px]">Alternatif</th>
+  <?php foreach($kriteria as $k): ?>
+    <th class="p-3 min-w-[90px]"><?= ucwords($k) ?></th>
+  <?php endforeach; ?>
+  <th class="p-3 min-w-[150px]">Aksi</th>
+</tr>
+</thead>
+
+<tbody>
+<?php
+$no = $offset+1;
+while($row = $alternatif->fetch_assoc()):
+?>
+<tr class="border-b border-white/10 hover:bg-white/5">
+<td class="p-3 text-center"><?= $no++ ?></td>
+<td class="p-3 font-semibold"><?= ucwords($row['alternatif']) ?></td>
+
+<?php for($i=1;$i<=count($kriteria);$i++): ?>
+<td class="p-3 text-center"><?= $row["k$i"] ?></td>
+<?php endfor; ?>
+
+<td class="p-3 flex gap-2">
+  <a href="edit-alternatif.php?id=<?= $row['id_alternatif'] ?>"
+     class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-xs font-bold">
+     Edit
+  </a>
+  <a href="del.php?id=<?= $row['id_alternatif'] ?>"
+     onclick="return confirm('Hapus alternatif <?= $row['alternatif'] ?> ?')"
+     class="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-xs font-bold">
+     Hapus
+  </a>
+</td>
+</tr>
+<?php endwhile; ?>
+</tbody>
+</table>
+
+<!-- PAGINATION -->
+<div class="flex justify-center gap-2 mt-8">
+<?php if($page>1): ?>
+<a href="?page=<?= $page-1 ?>"
+   class="px-4 py-2 border rounded-full hover:bg-white/10">
+‹ Prev
+</a>
+<?php endif; ?>
+
+<?php for($p=1;$p<=$totalPage;$p++): ?>
+<a href="?page=<?= $p ?>"
+   class="px-4 py-2 border rounded-full
+          <?= $p==$page?'bg-red-500':'' ?>">
+<?= $p ?>
+</a>
+<?php endfor; ?>
+
+<?php if($page<$totalPage): ?>
+<a href="?page=<?= $page+1 ?>"
+   class="px-4 py-2 border rounded-full hover:bg-white/10">
+Next ›
+</a>
+<?php endif; ?>
+</div>
+</div>
+
+<p class="text-center text-white/50 text-sm">
+© <?= $_SESSION['by']; ?>
+</p>
+</div>
+
+</body>
+</html>

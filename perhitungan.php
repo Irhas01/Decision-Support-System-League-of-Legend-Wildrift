@@ -1,449 +1,226 @@
 <?php
-	session_start();
-	include('configdb.php');
+session_start();
+include 'configdb.php';
+
+if (!isset($_SESSION['judul'])) $_SESSION['judul'] = "SPK League of Legends";
+if (!isset($_SESSION['by'])) $_SESSION['by'] = "Irhas Maulana S";
+
+/* =========================
+   FUNCTION
+========================= */
+function jml_kriteria(){
+    include 'configdb.php';
+    return $mysqli->query("SELECT * FROM kriteria")->num_rows;
+}
+
+function jml_alternatif(){
+    include 'configdb.php';
+    return $mysqli->query("SELECT * FROM alternatif")->num_rows;
+}
+
+function get_kepentingan(){
+    include 'configdb.php';
+    $q = $mysqli->query("SELECT kepentingan FROM kriteria");
+    while($r = $q->fetch_assoc()) $data[] = $r['kepentingan'];
+    return $data;
+}
+
+function get_costbenefit(){
+    include 'configdb.php';
+    $q = $mysqli->query("SELECT cost_benefit FROM kriteria");
+    while($r = $q->fetch_assoc()) $data[] = $r['cost_benefit'];
+    return $data;
+}
+
+function get_alt_name(){
+    include 'configdb.php';
+    $q = $mysqli->query("SELECT alternatif FROM alternatif");
+    while($r = $q->fetch_assoc()) $data[] = $r['alternatif'];
+    return $data;
+}
+
+function get_alternatif(){
+    include 'configdb.php';
+    $q = $mysqli->query("SELECT * FROM alternatif");
+    while($r = $q->fetch_assoc()){
+        $data[] = [
+            $r['k1'],$r['k2'],$r['k3'],$r['k4'],$r['k5'],
+            $r['k6'],$r['k7'],$r['k8'],$r['k9'],$r['k10'],$r['k11']
+        ];
+    }
+    return $data;
+}
+
+/* =========================
+   DATA
+========================= */
+$alt       = get_alternatif();
+$alt_name  = get_alt_name();
+$kep       = get_kepentingan();
+$cb        = get_costbenefit();
+
+$k = jml_kriteria();
+$a = jml_alternatif();
+
+/* =========================
+   WEIGHTED PRODUCT
+========================= */
+$tkep = array_sum($kep);
+for ($i=0;$i<$k;$i++){
+    $bkep[$i] = $kep[$i]/$tkep;
+    $pangkat[$i] = ($cb[$i]=='cost') ? -$bkep[$i] : $bkep[$i];
+}
+
+for ($i=0;$i<$a;$i++){
+    $ss[$i] = 1;
+    for ($j=0;$j<$k;$j++){
+        $nilai = (is_numeric($alt[$i][$j]) && $alt[$i][$j]>0) ? $alt[$i][$j] : 1;
+        $ss[$i] *= pow($nilai, $pangkat[$j]);
+    }
+}
+
+$totalS = array_sum($ss);
+for ($i=0;$i<$a;$i++){
+    $v[$i] = round($ss[$i]/$totalS,6);
+}
+
+$sortedV = $v;
+arsort($sortedV);
+
+/* =========================
+   PAGINATION SETUP
+========================= */
+$limit = 10;
+
+/* Matrix */
+$pageM = isset($_GET['page_m']) ? max(1,(int)$_GET['page_m']) : 1;
+$totalPageM = ceil(count($alt)/$limit);
+$matrixData = array_slice($alt, ($pageM-1)*$limit, $limit, true);
+
+/* Nilai V */
+$pageV = isset($_GET['page_v']) ? max(1,(int)$_GET['page_v']) : 1;
+$totalPageV = ceil(count($v)/$limit);
+$vData = array_slice($v, ($pageV-1)*$limit, $limit, true);
+
+/* Ranking */
+$pageR = isset($_GET['page_r']) ? max(1,(int)$_GET['page_r']) : 1;
+$totalPageR = ceil(count($sortedV)/$limit);
+$rankData = array_slice($sortedV, ($pageR-1)*$limit, $limit, true);
 ?>
+
 <!DOCTYPE html>
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="favicon.ico"> 
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title><?= $_SESSION['judul'].' - '.$_SESSION['by']; ?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-    <title><?php echo $_SESSION['judul']." - ".$_SESSION['by'];?></title>
-	
-    <!-- Bootstrap core CSS -->
-    <!--link href="ui/css/bootstrap.css" rel="stylesheet"-->
-	<link href="ui/css/cerulean.min.css" rel="stylesheet">
+<body class="bg-black text-white">
 
-    <!-- Custom styles for this template -->
-    <link href="ui/css/jumbotron.css" rel="stylesheet">
+<nav class="fixed top-0 w-full z-50 bg-black/90 border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <span class="font-bold"><span class="text-red-500">SPK</span> WILD RIFT</span>
+    <div class="hidden md:flex gap-8 text-sm font-semibold">
+      <a href="index.php">HOME</a>
+      <a href="kriteria.php">KRITERIA</a>
+      <a href="alternatif.php">ALTERNATIF</a>
+      <a href="analisa.php">ANALISA</a>
+      <a href="perhitungan.php" class="text-red-500">PERHITUNGAN</a>
+    </div>
+  </div>
+</nav>
 
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <!--script src="./index_files/ie-emulation-modes-warning.js"></script-->
+<div class="pt-32 px-6 max-w-7xl mx-auto">
+<h1 class="text-4xl font-black text-red-500 mb-10">PERHITUNGAN WEIGHTED PRODUCT</h1>
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
+<!-- ================= MATRIX ================= -->
+<div class="bg-white/10 border border-white/20 rounded-xl p-6 mb-12">
+<h3 class="font-bold text-red-500 mb-4">Matrix Alternatif – Kriteria</h3>
 
-  <body>
+<table class="w-full text-sm">
+<thead class="bg-red-500/20">
+<tr>
+<th class="p-3">Alternatif</th>
+<?php for($i=1;$i<=$k;$i++): ?><th class="p-3">K<?= $i ?></th><?php endfor; ?>
+</tr>
+</thead>
+<tbody>
+<?php foreach($matrixData as $i=>$row): ?>
+<tr class="border-b border-white/10">
+<td class="p-3 font-bold"><?= $alt_name[$i] ?></td>
+<?php foreach($row as $v): ?><td class="p-3 text-center"><?= $v ?></td><?php endforeach; ?>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
 
-      <!-- Static navbar -->
-      <nav class="navbar navbar-default">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#"><?php echo $_SESSION['judul'];?></a>
-          </div>
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-              <li><a href="index.php">Home</a></li>
-              <li><a href="kriteria.php">Data Kriteria</a></li>
-              <li><a href="alternatif.php">Data Alternatif</a></li>
-			  <li><a href="analisa.php">Analisa</a></li>
-              <li class="active"><a href="#">Perhitungan</a></li>
-			</ul>
-          </div><!--/.nav-collapse -->
-        </div><!--/.container-fluid -->
-      </nav>
-		<div class="container">
-      <!-- Main component for a primary marketing message or call to action -->
-      <div class="panel panel-primary">
-		  <!-- Default panel contents -->
-		  <div class="panel-heading">Matrix Alternatif-Kriteria</div>
-		  <div class="panel-body">
-			<center>
-				<?php
+<div class="flex justify-center gap-2 mt-6">
+<?php if($pageM>1): ?><a href="?page_m=<?= $pageM-1 ?>" class="px-4 py-2 border rounded-full">‹ Prev</a><?php endif; ?>
+<?php for($p=1;$p<=$totalPageM;$p++): ?>
+<a href="?page_m=<?= $p ?>" class="px-4 py-2 border rounded-full <?= $p==$pageM?'bg-red-500':'' ?>"><?= $p ?></a>
+<?php endfor; ?>
+<?php if($pageM<$totalPageM): ?><a href="?page_m=<?= $pageM+1 ?>" class="px-4 py-2 border rounded-full">Next ›</a><?php endif; ?>
+</div>
+</div>
 
-				// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Tabel Matrix Alternatif - Kriteria <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+<!-- ================= NILAI V ================= -->
+<div class="bg-white/10 border border-white/20 rounded-xl p-6 mb-12">
+<h3 class="font-bold text-red-500 mb-4">Nilai Preferensi (V)</h3>
 
-				$alt = get_alternatif();
-				$alt_name = get_alt_name();
-				end($alt_name); $arl2 = key($alt_name)+1; //new
-				$kep = get_kepentingan();
-				$cb = get_costbenefit();
-				$k = jml_kriteria();
-				$a = jml_alternatif();
-				$tkep = 0;
-				$tbkep = 0;
+<table class="w-full">
+<thead class="bg-red-500/20">
+<tr><th class="p-3">Alternatif</th><th class="p-3">Nilai</th></tr>
+</thead>
+<tbody>
+<?php foreach($vData as $i=>$val): ?>
+<tr class="border-b border-white/10">
+<td class="p-3"><?= $alt_name[$i] ?></td>
+<td class="p-3"><?= $val ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
 
-					// Pagination 
-					$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-					$limit = 10; 
-					$offset = ($page - 1) * $limit; 
-					$total_data = count($alt); 
-					$total_pages = ceil($total_data / $limit); 
+<div class="flex justify-center gap-2 mt-6">
+<?php if($pageV>1): ?><a href="?page_v=<?= $pageV-1 ?>" class="px-4 py-2 border rounded-full">‹ Prev</a><?php endif; ?>
+<?php for($p=1;$p<=$totalPageV;$p++): ?>
+<a href="?page_v=<?= $p ?>" class="px-4 py-2 border rounded-full <?= $p==$pageV?'bg-red-500':'' ?>"><?= $p ?></a>
+<?php endfor; ?>
+<?php if($pageV<$totalPageV): ?><a href="?page_v=<?= $pageV+1 ?>" class="px-4 py-2 border rounded-full">Next ›</a><?php endif; ?>
+</div>
+</div>
 
-					// Ambil hanya data sesuai halaman
-					$alt_paginated = array_slice($alt, $offset, $limit);
-					$alt_name_paginated = array_slice($alt_name, $offset, $limit);
+<!-- ================= RANKING ================= -->
+<div class="bg-white/10 border border-white/20 rounded-xl p-6 mb-12">
+<h3 class="font-bold text-red-500 mb-4">Peringkat Alternatif</h3>
 
-					echo "<table class='table table-bordered table-hover text-center'>";
-					echo "<thead class='thead-dark'><tr><th>Alternatif / Kriteria</th>";
-					for ($i = 1; $i <= $k; $i++) {
-						echo "<th>K{$i}</th>";
-					}
-					echo "</tr></thead><tbody>";
+<table class="w-full">
+<thead class="bg-red-500/20">
+<tr><th class="p-3 text-center">Rank</th><th class="p-3">Alternatif</th><th class="p-3 text-center">Nilai</th></tr>
+</thead>
+<tbody>
+<?php $rank = ($pageR-1)*$limit+1; foreach($rankData as $i=>$val): ?>
+<tr class="border-b border-white/10 <?= $rank==1?'bg-green-500/20':'' ?>">
+<td class="p-3 text-center font-bold"><?= $rank++ ?></td>
+<td class="p-3"><?= $alt_name[$i] ?></td>
+<td class="p-3 text-center"><?= $val ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
 
-					foreach ($alt_paginated as $index => $row) {
-						echo "<tr><td><b>A" . ($offset + $index + 1) . "</b></td>";
-						foreach ($row as $value) {
-							echo "<td>{$value}</td>";
-						}
-						echo "</tr>";
-					}
-					echo "</tbody></table>";
+<div class="flex justify-center gap-2 mt-6">
+<?php if($pageR>1): ?><a href="?page_r=<?= $pageR-1 ?>" class="px-4 py-2 border rounded-full">‹ Prev</a><?php endif; ?>
+<?php for($p=1;$p<=$totalPageR;$p++): ?>
+<a href="?page_r=<?= $p ?>" class="px-4 py-2 border rounded-full <?= $p==$pageR?'bg-red-500':'' ?>"><?= $p ?></a>
+<?php endfor; ?>
+<?php if($pageR<$totalPageR): ?><a href="?page_r=<?= $pageR+1 ?>" class="px-4 py-2 border rounded-full">Next ›</a><?php endif; ?>
+</div>
+</div>
 
-					// Navigasi Halaman
-					echo '<nav aria-label="Page navigation">';
-					echo '<ul class="pagination justify-content-center">';
-
-					// Tombol "Sebelumnya"
-					if ($page > 1) {
-						echo '<li class="page-item"><a class="page-link" href="?page=' . ($page - 1) . '">Sebelumnya</a></li>';
-					}
-
-					// Nomor Halaman
-					for ($i = 1; $i <= $total_pages; $i++) {
-						$active = ($i == $page) ? 'active' : '';
-						echo '<li class="page-item ' . $active . '"><a class="page-link" href="?page=' . $i . '">' . $i . '</a></li>';
-					}
-
-					// Tombol "Selanjutnya"
-					if ($page < $total_pages) {
-						echo '<li class="page-item"><a class="page-link" href="?page=' . ($page + 1) . '">Selanjutnya</a></li>';
-					}
-
-					echo "</ul>";
-					echo "</nav>";
-					echo "</div></div>";
-					
-					// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bobot/nilai kepentingan <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-					echo "<div class='panel' style='border-color: #2FA4E7;'>";
-					echo "<div class='panel-heading' style='background-color: #2FA4E7; color: white;'><b>Perhitungan Bobot Kepentingan</b></div>";
-					echo "<div class='panel-body'>";
-					echo "<table class='table table-striped table-bordered table-hover'>";
-					echo "<thead><tr><th></th><th>K1</th><th>K2</th><th>K3</th><th>K4</th><th>K5</th><th>K6</th><th>K7</th><th>K8</th><th>K9</th><th>K10</th><th>K11</th><th>Jumlah</th></tr></thead>";
-					
-					echo "<tr><td><b>Kepentingan</b></td>"; 
-						for($i=0;$i<$k;$i++){ // looping sebanyak kriteria
-							$tkep = $tkep + $kep[$i]; // total kepentingan
-							echo "<td>".$kep[$i]."</td>";
-						}
-						echo "<td>".$tkep."</td></tr>";
-						echo "<tr><td><b>Bobot Kepentingan</b></td>";
-						for($i=0;$i<$k;$i++){ // looping sebanyak kriteria
-							$bkep[$i] = ($kep[$i]/$tkep); // kepentingan dibagi total kepentingan
-							$tbkep = $tbkep + $bkep[$i]; // total bobot kepentingan
-							echo "<td>".round($bkep[$i],6)."</td>";
-						}
-						echo "<td>".$tbkep."</td></tr>";
-					echo "</table>";
-					echo "</div></div>";
-					
-					// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> pangkat <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-					echo "<div class='panel' style='border-color: #2FA4E7;'>";
-					echo "<div class='panel-heading' style='background-color: #2FA4E7; color: white;'><b>Perhitungan Pangkat</b></div>";
-					echo "<div class='panel-body'>";
-					echo "<table class='table table-striped table-bordered table-hover'>";
-					echo "<thead><tr><th></th><th>K1</th><th>K2</th><th>K3</th><th>K4</th><th>K5</th><th>K6</th><th>K7</th><th>K8</th><th>K9</th><th>K10</th><th>K11</th></tr></thead>";
-						echo "<tr><td><b>Cost/Benefit</b></td>";
-						for($i=0;$i<$k;$i++){ // looping sebanyak kriteria
-							echo "<td>".ucwords($cb[$i])."</td>"; 
-						}
-						echo "</tr>";
-						echo "<tr><td><b>Pangkat</b></td>";
-						for($i=0;$i<$k;$i++){ // looping sebanyak kriteria
-							if($cb[$i]=="cost"){ // informasi jika cost
-								$pangkat[$i] = (-1) * $bkep[$i]; // pangkat negatif
-								echo "<td>".round($pangkat[$i],6)."</td>";
-							}
-							else{
-								$pangkat[$i] = $bkep[$i]; // pangkat positif
-								echo "<td>".round($pangkat[$i],6)."</td>"; 
-							}
-						}
-						echo "</tr>";
-					echo "</table>";
-					echo "</div></div>";
-
-					// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> vektor S <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-					$ss = []; // Inisialisasi array untuk menyimpan hasil perhitungan vektor S
-					for ($i = 0; $i < count($alt); $i++) { // Looping untuk setiap alternatif
-						$prod = 1; // variabel untuk menyimpan hasil perkalian
-						for ($j = 0; $j < $k; $j++) { // Looping kedua untuk setiap kriteria
-							$prod *= pow($alt[$i][$j], $pangkat[$j]); // Menghitung hasil pangkat dari setiap alternatif
-						}
-						$ss[$i] = $prod;  // Menyimpan hasil perkalian ke dalam array
-					}
-
-					echo "<div class='panel' style='border-color: #2FA4E7;'>";
-					echo "<div class='panel-heading' style='background-color: #2FA4E7; color: white;'><b>Hasil Perhitungan Vektor S</b></div>";
-					echo "<div class='panel-body'>";
-					echo "<table class='table table-striped table-bordered table-hover'>";
-					echo "<thead><tr><th>Alternatif</th><th>S</th></tr></thead>";
-					echo "<tbody>";
-
-					// Pagination setup
-					$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-					$limit = 10;
-					$offset = ($page - 1) * $limit;
-					
-					$ss_paginated = array_slice($ss, $offset, $limit, true);
-					foreach ($ss_paginated as $i => $value) {
-						echo "<tr><td><b>A" . ($i + 1) . "</b></td>";
-						echo "<td>" . round($value, 6) . "</td></tr>";
-					}
-					echo "</tbody></table>";
-
-					$total_data = count($ss);
-					$total_pages = ceil($total_data / $limit);
-
-					echo "<div style='text-align: center;'>";
-					echo "<nav aria-label='Page navigation'>";
-					echo "<ul class='pagination' style='display: inline-block;'>";
-
-					if ($page > 1) {
-						echo "<li class='page-item'><a class='page-link' href='?page=" . ($page - 1) . "'>Sebelumnya</a></li>";
-					}
-					for ($i = 1; $i <= $total_pages; $i++) {
-						$active = ($i == $page) ? "active" : "";
-						echo "<li class='page-item $active'><a class='page-link' href='?page=$i'>$i</a></li>";
-					}
-					if ($page < $total_pages) {
-						echo "<li class='page-item'><a class='page-link' href='?page=" . ($page + 1) . "'>Selanjutnya</a></li>";
-					}
-					echo "</ul></nav>";
-					echo "</div>";
-
-					// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Nilai V <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-					echo "<div class='panel' style='border-color: #2FA4E7;'>";
-					echo "<div class='panel-heading' style='background-color: #2FA4E7; color: white;'><b>Hasil Perhitungan Nilai V</b></div>";
-					echo "<div class='panel-body'>";
-					echo "<table class='table table-striped table-bordered table-hover'>";
-					echo "<thead><tr><th>Alternatif</th><th>V</th></tr></thead>";
-					echo "<tbody>";
-
-					$total_s = array_sum($ss); // Menghitung total nilai S
-					$v = []; // Menyimpan hasil perhitungan nilai V
-					foreach ($ss as $i => $value) { // Perluangan hasil perhitungan vektor S 
-						$v[$i] = round($value / $total_s, 6); // Menghitung nilai V (membagi nilai vektor S setiap alternatif dengan total nilai S)
-					}
-
-					$v_paginated = array_slice($v, $offset, $limit, true);
-					foreach ($v_paginated as $i => $value) {
-						echo "<tr><td><b>" . $alt_name[$i] . "</b></td>";
-						echo "<td>" . $value . "</td></tr>";
-					}
-					echo "</tbody></table>";
-
-					echo "<div style='text-align: center;'>";
-					echo "<nav aria-label='Page navigation'>";
-					echo "<ul class='pagination' style='display: inline-block;'>";
-
-					if ($page > 1) {
-						echo "<li class='page-item'><a class='page-link' href='?page=" . ($page - 1) . "'>Sebelumnya</a></li>";
-					}
-					for ($i = 1; $i <= $total_pages; $i++) {
-						$active = ($i == $page) ? "active" : "";
-						echo "<li class='page-item $active'><a class='page-link' href='?page=$i'>$i</a></li>";
-					}
-					if ($page < $total_pages) {
-						echo "<li class='page-item'><a class='page-link' href='?page=" . ($page + 1) . "'>Selanjutnya</a></li>";
-					}
-					echo "</ul></nav>";
-					echo "</div></div>";
-
-
-							// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hasil Peringkat V <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-							uasort($v,'cmp'); // Mengurutkan nilai V
-							echo "<div class='panel' style='border-color: #2FA4E7;'>";
-							echo "<div class='panel-heading' style='background-color: #2FA4E7; color: white;'><b>Hasil Peringkat V</b></div>";
-							echo "<div class='panel-body'>";
-							echo "<table class='table table-striped table-bordered table-hover'>";
-							echo "<thead><tr><th>Ranking</th><th>Alternatif</th><th>V</th></tr></thead>";
-							echo "<tbody>";				
-							
-							// Pagination
-							$limit = 10; // Jumlah data per halaman
-							$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-							$offset = ($page - 1) * $limit;
-
-							// Urutkan data berdasarkan hasil perhitungan Vektor V (dari tinggi ke rendah)
-							$sortedV = $v;
-							arsort($sortedV);
-
-							// Potong array hasil perhitungan berdasarkan halaman yang aktif
-							$paginatedV = array_slice($sortedV, $offset, $limit, true);
-							$totalData = count($sortedV);
-							$totalPages = ceil($totalData / $limit);
-
-							// Mengurutkan nilai dari tertinggi ke terendah
-							$rank = $offset + 1;
-							$lastRank = count($sortedV);
-							
-							foreach ($paginatedV as $altIndex => $value) {
-								$rowClass = "";
-								if ($rank == 1) {
-									$rowClass = "success"; // Warna hijau untuk peringkat 1
-								} elseif ($rank == $lastRank) {
-									$rowClass = "danger"; // Warna merah untuk peringkat terakhir
-								}	
-
-								echo "<tr class='$rowClass'>";
-								echo "<td><b>$rank</b></td>";
-								echo "<td><b>".$alt_name[$altIndex]."</b></td>";
-								echo "<td>".$value."</td>";
-								echo "</tr>";
-								$rank++;
-								}
-								echo "</tbody></table>"; 
-
-								// Pagination
-								echo "<div style='text-align: center;'>";
-								echo "<nav aria-label='Page navigation'>";
-								echo "<ul class='pagination' style='display: inline-block;'>";
-
-
-								// Tombol Sebelumnya
-								$prevPage = ($page > 1) ? $page - 1 : 1;
-								echo "<li class='".($page == 1 ? "disabled" : "")."'><a href='perhitungan.php?page=$prevPage'>&laquo; Sebelumnya</a></li>";
-
-								for ($i = 1; $i <= $totalPages; $i++) {
-									$active = ($i == $page) ? "active" : "";
-									echo "<li class='$active'><a href='perhitungan.php?page=$i'>$i</a></li>";
-								}
-
-								// Tombol Selanjutnya
-								$nextPage = ($page < $totalPages) ? $page + 1 : $totalPages;
-								echo "<li class='".($page == $totalPages ? "disabled" : "")."'><a href='perhitungan.php?page=$nextPage'>Selanjutnya &raquo;</a></li>";
-
-								echo "</ul>";
-								echo "</nav>";
-
-								echo "</div></div>";
-												function jml_kriteria(){
-													include 'configdb.php';
-													$kriteria = $mysqli->query("select * from kriteria");
-													return $kriteria->num_rows;
-												}
-		
-												function jml_alternatif(){
-													include 'configdb.php';
-													$alternatif = $mysqli->query("select * from alternatif");
-													return $alternatif->num_rows;
-												}
-		
-												function get_kepentingan(){
-													include 'configdb.php';
-													$kepentingan = $mysqli->query("select * from kriteria");
-													if(!$kepentingan){
-														echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-														exit();
-													}
-													$i=0;
-													while ($row = $kepentingan->fetch_assoc()) {
-														@$kep[$i] = $row["kepentingan"];
-														$i++;
-													}
-													return $kep;
-												}
-		
-												function get_costbenefit(){
-													include 'configdb.php';
-													$costbenefit = $mysqli->query("select * from kriteria");
-													if(!$costbenefit){
-														echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-														exit();
-													}
-													$i=0;
-													while ($row = $costbenefit->fetch_assoc()) {
-														@$cb[$i] = $row["cost_benefit"];
-														$i++;
-													}
-													return $cb;
-												}
-		
-												function get_alt_name(){
-													include 'configdb.php';
-													$alternatif = $mysqli->query("select * from alternatif");
-													if(!$alternatif){
-														echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-														exit();
-													}
-													$i=0;
-													while ($row = $alternatif->fetch_assoc()) {
-														@$alt[$i] = $row["alternatif"];
-														$i++;
-													}
-													return $alt;
-												}
-		
-												function get_alternatif(){
-													include 'configdb.php';
-													$alternatif = $mysqli->query("select * from alternatif");
-													if(!$alternatif){
-														echo $mysqli->connect_errno." - ".$mysqli->connect_error;
-														exit();
-													}
-													$i=0;
-													while ($row = $alternatif->fetch_assoc()) {
-														@$alt[$i][0] = $row["k1"];
-														@$alt[$i][1] = $row["k2"];
-														@$alt[$i][2] = $row["k3"];
-														@$alt[$i][3] = $row["k4"];
-														@$alt[$i][4] = $row["k5"];
-														@$alt[$i][5] = $row["k6"];
-														@$alt[$i][6] = $row["k7"];
-														@$alt[$i][7] = $row["k8"];
-														@$alt[$i][8] = $row["k9"];
-														@$alt[$i][9] = $row["k10"];
-														@$alt[$i][10] = $row["k11"];
-														$i++;
-													}
-													return $alt;
-												}
-		
-												function cmp($a, $b){
-													if ($a == $b) {
-														return 0;
-													}
-													return ($a < $b) ? -1 : 1;
-												}
-		
-												function print_ar(array $x){	//just for print array
-													echo "<pre>";
-													print_r($x);
-													echo "</pre></br>";
-												}
-						?>
-					</center>
-				  </div>
-				  <div class="panel-footer text-primary"><?php echo $_SESSION['by'];?><div class="pull-right"></div></div>
-				</div>
-		
-			</div> <!-- /container -->
-		
-		
-			<!-- Bootstrap core JavaScript
-			================================================== -->
-			<!-- Placed at the end of the document so the pages load faster -->
-			<script src="ui/js/jquery-1.10.2.min.js"></script>
-			<script src="ui/js/bootstrap.min.js"></script>
-			<script src="ui/js/bootswatch.js"></script>
-			<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-			<script src="ui/js/ie10-viewport-bug-workaround.js"></script>
-		
-		</body></html>
-		
+<p class="text-center text-white/50 text-sm">© <?= $_SESSION['by'] ?></p>
+</div>
+</body>
+</html>

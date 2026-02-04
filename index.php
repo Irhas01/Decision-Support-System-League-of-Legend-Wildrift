@@ -1,98 +1,117 @@
-<?php
-	session_start();
-	include('configdb.php');
-?>
 <!DOCTYPE html>
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-    
-    <link rel="icon" href="favicon.ico">
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPK Pemilihan Karakter Wild Rift</title>
 
-    <title><?php echo $_SESSION['judul']." - ".$_SESSION['by'];?></title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white font-sans antialiased">
 
-    <!-- Bootstrap core CSS -->
-    <!--link href="ui/css/bootstrap.css" rel="stylesheet"-->
-	<link href="ui/css/cerulean.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="style.css">
-
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <!--script src="./index_files/ie-emulation-modes-warning.js"></script-->
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
-
-  <body>
-      <!-- Static navbar -->
-      <nav class="navbar navbar-default">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#"><?php echo $_SESSION['judul'];?></a>
-          </div>
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="kriteria.php">Data Kriteria</a></li>
-              <li><a href="alternatif.php">Data Alternatif</a></li>
-			  <li><a href="analisa.php">Analisa</a></li>
-              <li><a href="perhitungan.php">Perhitungan</a></li>
-			</ul>
-          </div><!--/.nav-collapse -->
-        </div><!--/.container-fluid -->
-      </nav>
-		<div class="container">
-
-      <!-- Main component for a primary marketing message or call to action -->
-      <div class="panel panel-default">
-		  <!-- Default panel contents -->
-		  <div class="panel-heading">Home</div>
-		  <div class="panel-body">
-			<h3><p align="center" class="text-primary" ><?php echo $_SESSION['welcome'];?></p></h3>
-
-			<center>
-				<h1 style="color:#2980b9; font-family:'arial black'" >PEMILIHAN KARAKTER LEAGUE OF LEGEND : WILDRIFT</h1>
-			<img src="lol.jpg" alt="Hape Yak" height="300" width="700">
-		</center>
-
-      <center>
-    <a href="kriteria.php" class="btn btn-primary btn-lg" style="margin-top: 20px; margin-bottom: 20px; width: 200px;">
-        <i class="fa fa-list"></i> Mulai Pemilihan
+<!-- NAVBAR -->
+<nav class="fixed top-0 left-0 w-full z-50 bg-black/90 backdrop-blur border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="index.php" class="flex items-center gap-3 font-bold tracking-wider text-white hover:text-red-500">
+      <span class="text-red-500">SPK</span> WILD RIFT
     </a>
-    </center>
 
-		  </div>
+    <!-- Menu -->
+    <div class="hidden md:flex gap-8 text-sm font-semibold">
+      <a href="kriteria.php" class="hover:text-red-500">DATA KRITERIA</a>
+      <a href="alternatif.php" class="hover:text-red-500">DATA ALTERNATIF</a>
+      <a href="analisa.php" class="hover:text-red-500">ANALISA</a>
+      <a href="perhitungan.php" class="hover:text-red-500">PERHITUNGAN</a>
+      <a href="#tentang" class="hover:text-red-500">TENTANG SISTEM</a>
+    </div>
+  </div>
+</nav>
 
-		  <!-- Table -->
-		  <table class="table"> 
-		  </table>
-		  <div class="panel-footer text-primary"><?php echo $_SESSION['by'];?><div class="pull-right"></div></div>
-		</div>
+<!-- HERO -->
+<section class="relative min-h-screen w-full overflow-hidden">
+  <!-- Background -->
+  <img src="lol.jpg" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black"></div>
 
-    </div> <!-- /container -->
+  <!-- Content -->
+  <div class="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6 pt-20">
+    <h1 class="text-4xl md:text-6xl font-black tracking-tight text-red-500 mb-6">
+      SISTEM PENDUKUNG KEPUTUSAN
+    </h1>
+    <p class="text-lg md:text-xl text-white/90 max-w-2xl mb-10">
+      Pemilihan Karakter Terbaik pada Game <b>League of Legends: Wild Rift</b><br />
+      Menggunakan Metode <b>Weighted Product (WP)</b>
+    </p>
 
+    <!-- CTA -->
+    <div class="relative group">
+      <div class="absolute -left-4 -top-4 w-full h-full border-2 border-white/70 transition-all group-hover:-left-2 group-hover:-top-2"></div>
+      <a href="kriteria.php" class="relative z-10 inline-block bg-red-500 px-12 py-5 font-bold tracking-widest hover:scale-105 transition">
+        MULAI PEMILIHAN
+      </a>
+    </div>
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="ui/js/jquery-1.10.2.min.js"></script>
-	<script src="ui/js/bootstrap.min.js"></script>
-	<script src="ui/js/bootswatch.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="ui/js/ie10-viewport-bug-workaround.js"></script>
+    <p class="mt-8 text-white/70 text-sm">
+      *Tentukan Karakter terbaik dalam setiap pertandingan!
+    </p>
+  </div>
+</section>
 
-</body></html>
+<!-- FITUR / LANGKAH -->
+<section class="bg-[#ecf0f3] text-black py-24 px-6" id="tentang">
+  <div class="max-w-7xl mx-auto">
+    <!-- Judul Besar -->
+    <div class="relative mb-24">
+      <span class="absolute left-10 top-0 text-[120px] font-black opacity-10" style="color:transparent;-webkit-text-stroke:2px #d1d5db;">WEBSITE</span>
+      <h2 class="relative text-4xl md:text-6xl font-black text-red-500">ALUR SISTEM</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-12">
+      <!-- Step 1 -->
+      <div class="group">
+        <div class="relative h-64 mb-6 overflow-hidden shadow-lg">
+          <img src="step1.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+        </div>
+        <h3 class="text-red-500 font-bold tracking-widest mb-2">LANGKAH PERTAMA</h3>
+        <p>
+          Pengguna melakukan input data kriteria dan bobot penilaian sesuai preferensi permainan.
+        </p>
+        <a href="kriteria.php" class="inline-block mt-4 text-sm font-semibold text-red-500">Input Kriteria →</a>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="group">
+        <div class="relative h-64 mb-6 overflow-hidden shadow-lg">
+          <img src="step2.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+        </div>
+        <h3 class="text-red-500 font-bold tracking-widest mb-2">LANGKAH KEDUA</h3>
+        <p>
+          Sistem melakukan proses normalisasi bobot dan perhitungan menggunakan metode Weighted Product.
+        </p>
+        <a href="analisa.php" class="inline-block mt-4 text-sm font-semibold text-red-500">Lihat Analisa →</a>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="group">
+        <div class="relative h-64 mb-6 overflow-hidden shadow-lg">
+          <img src="step3.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+        </div>
+        <h3 class="text-red-500 font-bold tracking-widest mb-2">LANGKAH KETIGA</h3>
+        <p>
+          Sistem menghasilkan ranking karakter dan menampilkan rekomendasi karakter terbaik.
+        </p>
+        <a href="perhitungan.php" class="inline-block mt-4 text-sm font-semibold text-red-500">Hasil Perhitungan →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-black text-center py-6 text-sm text-white/60">
+  © 2026 — Sistem Pendukung Keputusan Pemilihan Karakter League of Legends: Wild Rift
+</footer>
+
+</body>
+</html>
